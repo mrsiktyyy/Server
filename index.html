@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, maximum-scale=1.0, viewport-fit=cover">
+    <title>MSB · Стеклянные блоки</title>
+    <style>
+        /* ---------- СТЕКЛЯННЫЙ СТИЛЬ ---------- */
+        * {
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            min-height: 100vh;
+            background: var(--bg, #0a0f1a);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: #f0f4fa;
+            touch-action: none;
+            transition: background 0.3s ease;
+            padding: 12px;
+        }
+        #app {
+            width: 100%;
+            max-width: 600px;
+            background: rgba(18, 28, 40, 0.35);
+            backdrop-filter: blur(16px) saturate(180%);
+            -webkit-backdrop-filter: blur(16px) saturate(180%);
+            border-radius: 36px;
+            padding: 20px 16px 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.08) inset;
+            border: 1px solid rgba(255,255,255,0.12);
+            transition: opacity 0.3s ease, background 0.3s;
+        }
+        .screen {
+            display: none;
+            opacity: 0;
+            transition: opacity 0.25s ease;
+        }
+        .screen.active {
+            display: block;
+            opacity: 1;
+        }
+        h1, h2 {
+            text-align: center;
+            font-weight: 700;
+            letter-spacing: 2px;
+            margin: 5px 0 20px;
+            text-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            color: #ffd966;
+        }
+        h1 { font-size: 2.8rem; }
+        h2 { font-size: 2rem; }
+        button {
+            background: rgba(30, 50, 70, 0.45);
+            backdrop-filter: blur(8px);
+            -webkit-backdrop-filter: blur(8px);
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            color: #f0f4fa;
+            font-weight: bold;
+            font-size: 1.1rem;
+            padding: 12px 24px;
+            margin: 8px 6px;
+            border-radius: 60px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3);
+            cursor: pointer;
+            transition: all 0.15s ease;
+            flex: 1 0 auto;
+            transform: translateY(0);
+            text-shadow: 0 1px 2px black;
+        }
+        button:hover {
+            background: rgba(60, 90, 130, 0.6);
+            border-color: rgba(255, 255, 255, 0.35);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.4);
+        }
+        button:active {
+            transform: translateY(3px);
+            box-shadow: 0 3px 8px rgba(0,0,0,0.4);
+        }
+        button.secondary {
+            background: rgba(60, 60, 90, 0.45);
+            border-color: rgba(200, 200, 240, 0.2);
+        }
+        .input-group { margin: 15px 0; }
+        input {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1rem;
+            border-radius: 40px;
+            border: none;
+            background: rgba(20, 35, 50, 0.7);
+            backdrop-filter: blur(4px);
+            color: white;
+            outline: 1px solid rgba(100, 150, 200, 0.5);
+            margin-bottom: 12px;
+            transition: outline 0.2s, background 0.2s;
+        }
+        input:focus {
+            outline: 2px solid #7aa5c2;
+            background: rgba(30, 50, 70, 0.8);
+        }
+        input::placeholder { color: #a0b5cc; }
+        .row { display: flex; flex-wrap: wrap; justify-content: center; gap: 10px; }
+        .menu-buttons { display: flex; flex-direction: column; gap: 8px; margin-top: 15px; }
+        .game-header { margin-bottom: 10px; }
+        .wave-fullwidth {
+            background: rgba(15, 25, 40, 0.6);
+            backdrop-filter: blur(8px);
+            padding: 14px 20px;
+            border-radius: 40px;
+            font-weight: bold;
+            font-size: 1.8rem;
+            color: #f5c542;
+            box-shadow: inset 0 2px 5px #00000055, 0 4px 10px #00000030, 0 0 0 1px rgba(255,215,100,0.2);
+            text-align: center;
+            width: 100%;
+        }
+        .board-container { display: flex; justify-content: center; margin: 15px 0; }
+        #boardCanvas {
+            background: rgba(10, 20, 30, 0.5);
+            backdrop-filter: blur(6px);
+            border-radius: 24px;
+            box-shadow: 0 10px 20px #00000060, inset 0 0 0 1px rgba(255,255,255,0.1);
+            width: 100%;
+            max-width: 360px;
+            height: auto;
+            aspect-ratio: 1/1;
+            touch-action: none;
+            border: 1px solid rgba(255,255,255,0.15);
+        }
+        .pieces-container { display: flex; justify-content: space-around; margin: 20px 0 15px; gap: 12px; }
+        .piece {
+            background: rgba(25, 45, 65, 0.5);
+            backdrop-filter: blur(8px);
+            border-radius: 20px;
+            padding: 12px 8px;
+            box-shadow: 0 6px 12px rgba(0,0,0,0.3), inset 0 0 0 1px rgba(255,255,255,0.15);
+            cursor: grab;
+            transition: transform 0.15s, box-shadow 0.15s, opacity 0.2s;
+            flex: 1;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            touch-action: none;
+            will-change: transform;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .piece.dragging {
+            opacity: 0.7;
+            transform: scale(0.98);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.5), inset 0 0 0 2px #ffd966;
+            cursor: grabbing;
+        }
+        .piece canvas {
+            display: block;
+            max-width: 100px;
+            height: auto;
+            background: transparent;
+            pointer-events: none;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        .menu-btn-small {
+            background: rgba(50, 50, 80, 0.5);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.15);
+            font-size: 1rem;
+            padding: 10px 20px;
+            min-width: 130px;
+            margin: 10px auto;
+            display: block;
+        }
+        .stats-table {
+            background: rgba(15, 25, 35, 0.5);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            padding: 18px;
+            margin: 15px 0;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .leaderboard-entry {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            cursor: pointer;
+            transition: background 0.2s;
+            border-radius: 16px;
+        }
+        .leaderboard-entry:hover { background: rgba(255,255,255,0.06); }
+        #loginFormContainer { margin-top: 20px; }
+        #gameMessage { text-align: center; min-height: 24px; font-weight: 500; color: #ddd; }
+        .line-clear-effect { animation: flashClear 0.3s ease; }
+        @keyframes flashClear {
+            0% { box-shadow: 0 10px 20px #00000060, inset 0 0 0 1px rgba(255,255,255,0.1); }
+            50% { box-shadow: 0 10px 30px #f5c54280, inset 0 0 0 4px #f5c542; }
+            100% { box-shadow: 0 10px 20px #00000060, inset 0 0 0 1px rgba(255,255,255,0.1); }
+        }
+        /* Стили для перетаскиваемого клона */
+        .drag-clone {
+            position: fixed;
+            z-index: 9999;
+            pointer-events: none;
+            opacity: 0.9;
+            filter: drop-shadow(0 8px 16px rgba(0,0,0,0.6));
+            transition: none;
+            will-change: left, top;
+            image-rendering: crisp-edges; /* чтобы пиксели были чёткими */
+        }
+        /* Настройки */
+        .settings-option {
+            margin: 20px 0;
+            padding: 16px;
+            background: rgba(20, 30, 45, 0.4);
+            backdrop-filter: blur(8px);
+            border-radius: 24px;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+        .color-picker-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin: 12px 0;
+        }
+        input[type="range"] {
+            width: 100%;
+            margin: 8px 0;
+            background: transparent;
+        }
+        .volume-control {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .small-text { color: #b0c7dd; font-size: 0.9rem; }
+    </style>
+</head>
+<body id="mainBody">
+<div id="app">
+    <!-- ЭКРАН ВХОДА / ГОСТЬ -->
+    <div id="loginScreen" class="screen active">
+        <h1>🧩 MSB</h1>
+        <div style="display: flex; flex-direction: column; align-items: center;">
+            <button id="guestBtn" style="width: 80%;">👤 Играть как гость</button>
+            <button id="showLoginBtn" style="width: 80%; margin-top: 15px;">🔐 Войти</button>
+        </div>
+        <div id="loginFormContainer" style="display: none;">
+            <div class="input-group">
+                <input type="text" id="loginUsername" placeholder="Никнейм" maxlength="20">
+                <input type="password" id="loginPassword" placeholder="Пароль" maxlength="20">
+                <div class="row">
+                    <button id="loginBtn">Вход</button>
+                    <button id="registerBtn" class="secondary">Регистрация</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ГЛАВНОЕ МЕНЮ -->
+    <div id="menuScreen" class="screen">
+        <h1>🧩 MSB</h1>
+        <div style="text-align:center; margin-bottom:20px;">
+            <span id="welcomeUser">Привет, игрок</span>
+        </div>
+        <div class="menu-buttons">
+            <button id="playBtn">▶ Играть</button>
+            <button id="leaderboardBtn">🏆 Таблица лучших</button>
+            <button id="profileBtn">👤 Профиль</button>
+            <button id="settingsBtn">⚙️ Настройки</button>
+            <button id="logoutBtn" class="secondary">🚪 Выйти</button>
+        </div>
+    </div>
+
+    <!-- ЭКРАН ИГРЫ -->
+    <div id="gameScreen" class="screen">
+        <div class="game-header">
+            <div class="wave-fullwidth">🌊 Волна <span id="waveCounter">0</span></div>
+        </div>
+        <div class="board-container">
+            <canvas id="boardCanvas" width="270" height="270"></canvas>
+        </div>
+        <div class="pieces-container" id="piecesContainer"></div>
+        <button id="backToMenuFromGame" class="menu-btn-small">← В меню</button>
+        <p id="gameMessage"></p>
+    </div>
+
+    <!-- ПРОФИЛЬ (свой) -->
+    <div id="profileScreen" class="screen">
+        <h2>👤 Профиль</h2>
+        <div class="stats-table" id="profileStatsContainer"></div>
+        <button id="backFromProfile" class="menu-btn-small">← Назад</button>
+    </div>
+
+    <!-- ПРОФИЛЬ ДРУГОГО ИГРОКА -->
+    <div id="otherProfileScreen" class="screen">
+        <h2>👤 Профиль игрока</h2>
+        <div class="stats-table" id="otherProfileStatsContainer"></div>
+        <button id="backFromOtherProfile" class="menu-btn-small">← Назад</button>
+    </div>
+
+    <!-- ТАБЛИЦА ЛИДЕРОВ -->
+    <div id="leaderboardScreen" class="screen">
+        <h2>🏆 Лучшие игроки</h2>
+        <div id="leaderboardList" class="stats-table"></div>
+        <button id="backFromLeaderboard" class="menu-btn-small">← Назад</button>
+    </div>
+
+    <!-- НАСТРОЙКИ -->
+    <div id="settingsScreen" class="screen">
+        <h2>⚙️ Настройки</h2>
+        <div class="settings-option">
+            <h3 style="margin-top:0;">🎨 Тема</h3>
+            <label><input type="radio" name="themeType" value="solid" checked> Однотонный</label>
+            <div class="color-picker-row">
+                <span>Цвет фона:</span>
+                <input type="color" id="solidColorPicker" value="#0a0f1a">
+            </div>
+            <label><input type="radio" name="themeType" value="gradient"> Градиент</label>
+            <div class="color-picker-row">
+                <span>Цвет 1:</span>
+                <input type="color" id="gradientColor1" value="#1e2b3a">
+            </div>
+            <div class="color-picker-row">
+                <span>Цвет 2:</span>
+                <input type="color" id="gradientColor2" value="#0f1722">
+            </div>
+        </div>
+        <div class="settings-option">
+            <h3 style="margin-top:0;">🔊 Звук</h3>
+            <div class="volume-control">
+                <span>🔇</span>
+                <input type="range" id="volumeSlider" min="0" max="1" step="0.05" value="0.5">
+                <span>🔊</span>
+            </div>
+            <button id="testSoundBtn" style="margin-top:12px;">🔔 Тест звука</button>
+        </div>
+        <button id="applySettingsBtn">Применить</button>
+        <button id="backFromSettings" class="menu-btn-small" style="margin-top:20px;">← Назад</button>
+    </div>
+</div>
+
+<script>
+    (function(){
+        "use strict";
+
+        // ---------- КОНФИГУРАЦИЯ API ----------
+        // Замените на URL вашего сервера после деплоя
+        const API_BASE = 'http://localhost:3000/api'; 
+        // Для продакшена: 'https://your-server.onrender.com/api'
+
+        // ---------- ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ ----------
+        let currentSession = JSON.parse(localStorage.getItem('msb_session')) || null;
+        let soundEnabled = true;
+        let soundVolume = 0.5;
+        let audioCtx = null;
+        let theme = JSON.parse(localStorage.getItem('msb_theme')) || {
+            type: 'solid',
+            solid: '#0a0f1a',
+            grad1: '#1e2b3a',
+            grad2: '#0f1722'
+        };
+
+        // DOM элементы
+        const screens = {
+            login: document.getElementById('loginScreen'),
+            menu: document.getElementById('menuScreen'),
+            game: document.getElementById('gameScreen'),
+            profile: document.getElementById('profileScreen'),
+            otherProfile: document.getElementById('otherProfileScreen'),
+            leaderboard: document.getElementById('leaderboardScreen'),
+            settings: document.getElementById('settingsScreen')
+        };
+        const body = document.getElementById('mainBody');
+
+        // ---------- ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ ----------
+        function showScreen(screenId) {
+            Object.values(screens).forEach(s => s.classList.remove('active'));
+            screens[screenId].classList.add('active');
+        }
+
+        function formatTime(minutes) {
+            if (minutes < 60) return `${Math.round(minutes)} мин`;
+            const h = Math.floor(minutes / 60);
+            const m = Math.round(minutes % 60);
+            return `${h} ч ${m} мин`;
+        }
+
+        // Применение темы
+        function applyTheme() {
+            if (theme.type === 'solid') {
+                body.style.setProperty('--bg', theme.solid);
+                body.style.background = theme.solid;
+            } else {
+                const grad = `linear-gradient(145deg, ${theme.grad1}, ${theme.grad2})`;
+                body.style.setProperty('--bg', grad);
+                body.style.background = grad;
+            }
+            localStorage.setItem('msb_theme', JSON.stringify(theme));
+        }
+        applyTheme();
+
+        // Инициализация звука
+        function initAudio() {
+            if (audioCtx) return;
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                // resume должен вызываться по пользовательскому жесту
+            } catch(e) {
+                soundEnabled = false;
+            }
+        }
+
+        async function resumeAudio() {
+            if (audioCtx && audioCtx.state === 'suspended') {
+                await audioCtx.resume();
+            }
+        }
+
+        function playSound(type) {
+            if (!soundEnabled || !audioCtx) return;
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+            const now = audioCtx.currentTime;
+            const gain = audioCtx.createGain();
+            gain.gain.value = soundVolume;
+            gain.connect(audioCtx.destination);
+            const osc = audioCtx.createOscillator();
+            osc.connect(gain);
+            if (type === 'place') {
+                osc.frequency.value = 440;
+                gain.gain.setValueAtTime(soundVolume, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.08);
+                osc.start();
+                osc.stop(now + 0.08);
+            } else if (type === 'clear') {
+                osc.frequency.value = 660;
+                gain.gain.setValueAtTime(soundVolume, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.2);
+                osc.start();
+                osc.stop(now + 0.2);
+            } else if (type === 'gameover') {
+                osc.frequency.value = 220;
+                gain.gain.setValueAtTime(soundVolume, now);
+                gain.gain.exponentialRampToValueAtTime(0.01, now + 0.4);
+                osc.start();
+                osc.stop(now + 0.4);
+            }
+        }
+
+        // API запросы
+        async function apiCall(endpoint, method = 'GET', body = null) {
+            const options = { method, headers: { 'Content-Type': 'application/json' } };
+            if (body) options.body = JSON.stringify(body);
+            const res = await fetch(`${API_BASE}${endpoint}`, options);
+            return res.json();
+        }
+
+        // Обновление времени на сервере (каждые 10 сек)
+        let lastTimeUpdate = Date.now();
+        setInterval(async () => {
+            if (currentSession && !currentSession.isGuest) {
+                const now = Date.now();
+                const mins = Math.floor((now - lastTimeUpdate) / 60000);
+                if (mins > 0) {
+                    await apiCall('/update', 'POST', {
+                        username: currentSession.username,
+                        totalTimeMinutes: mins
+                    });
+                    lastTimeUpdate = now;
+                }
+            }
+        }, 10000);
+
+        // ---------- АВТОРИЗАЦИЯ ----------
+        async function loginUser(username, isGuest = false) {
+            currentSession = { username, isGuest, loginTime: Date.now() };
+            localStorage.setItem('msb_session', JSON.stringify(currentSession));
+            document.getElementById('welcomeUser').textContent = isGuest ? '👤 Гость' : `👋 ${username}`;
+            if (!isGuest) lastTimeUpdate = Date.now();
+            showScreen('menu');
+        }
+
+        function logout() {
+            currentSession = null;
+            localStorage.removeItem('msb_session');
+            showScreen('login');
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            document.getElementById('loginFormContainer').style.display = 'none';
+        }
+
+        // Обработчики
+        document.getElementById('showLoginBtn').addEventListener('click', () => {
+            document.getElementById('loginFormContainer').style.display = 'block';
+            initAudio();
+        });
+        document.getElementById('guestBtn').addEventListener('click', async () => {
+            initAudio();
+            await loginUser('Гость', true);
+        });
+        document.getElementById('loginBtn').addEventListener('click', async () => {
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value;
+            if (!u || !p) { alert('Введи ник и пароль'); return; }
+            const res = await apiCall('/login', 'POST', { username: u, password: p });
+            if (res.error) { alert(res.error); return; }
+            await loginUser(u, false);
+        });
+        document.getElementById('registerBtn').addEventListener('click', async () => {
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value;
+            if (!u || !p) { alert('Заполни поля'); return; }
+            if (u.length > 20 || p.length > 20) { alert('Максимум 20 символов'); return; }
+            const res = await apiCall('/register', 'POST', { username: u, password: p });
+            if (res.error) { alert(res.error); return; }
+            alert('Регистрация успешна! Теперь войдите.');
+            document.getElementById('loginFormContainer').style.display = 'block';
+        });
+
+        // Навигация
+        document.getElementById('logoutBtn').addEventListener('click', logout);
+        document.getElementById('playBtn').addEventListener('click', () => {
+            if (!currentSession) { showScreen('login'); return; }
+            startNewGame();
+            showScreen('game');
+        });
+        document.getElementById('profileBtn').addEventListener('click', async () => {
+            if (!currentSession) { showScreen('login'); return; }
+            await loadProfile(currentSession.username, 'profileStatsContainer');
+            showScreen('profile');
+        });
+        document.getElementById('leaderboardBtn').addEventListener('click', async () => {
+            await loadLeaderboard();
+            showScreen('leaderboard');
+        });
+        document.getElementById('settingsBtn').addEventListener('click', () => {
+            // Загружаем текущие настройки в форму
+            document.querySelector(`input[value="${theme.type}"]`).checked = true;
+            document.getElementById('solidColorPicker').value = theme.solid;
+            document.getElementById('gradientColor1').value = theme.grad1;
+            document.getElementById('gradientColor2').value = theme.grad2;
+            document.getElementById('volumeSlider').value = soundVolume;
+            showScreen('settings');
+            initAudio();
+        });
+        document.getElementById('backToMenuFromGame').addEventListener('click', () => {
+            if (gameActive) endGame(false);
+            showScreen('menu');
+        });
+        document.getElementById('backFromProfile').addEventListener('click', () => showScreen('menu'));
+        document.getElementById('backFromOtherProfile').addEventListener('click', () => showScreen('leaderboard'));
+        document.getElementById('backFromLeaderboard').addEventListener('click', () => showScreen('menu'));
+        document.getElementById('backFromSettings').addEventListener('click', () => showScreen('menu'));
+
+        // Применение настроек
+        document.getElementById('applySettingsBtn').addEventListener('click', () => {
+            theme.type = document.querySelector('input[name="themeType"]:checked').value;
+            theme.solid = document.getElementById('solidColorPicker').value;
+            theme.grad1 = document.getElementById('gradientColor1').value;
+            theme.grad2 = document.getElementById('gradientColor2').value;
+            soundVolume = parseFloat(document.getElementById('volumeSlider').value);
+            applyTheme();
+            showScreen('menu');
+        });
+        document.getElementById('testSoundBtn').addEventListener('click', async () => {
+            initAudio();
+            await resumeAudio();
+            playSound('place');
+        });
+
+        // Загрузка профиля
+        async function loadProfile(username, containerId) {
+            const container = document.getElementById(containerId);
+            if (username === 'Гость') {
+                container.innerHTML = `<p>Гость не имеет статистики</p>`;
+                return;
+            }
+            const stats = await apiCall(`/user/${username}`);
+            if (stats.error) {
+                container.innerHTML = `<p>Ошибка загрузки</p>`;
+                return;
+            }
+            container.innerHTML = `
+                <p>Игрок: <strong>${username}</strong></p>
+                <p>🏅 Лучший результат (волн): ${stats.bestWave || 0}</p>
+                <p>🎮 Всего игр: ${stats.gamesPlayed || 0}</p>
+                <p>⏱️ Общее время: ${formatTime(stats.totalTimeMinutes || 0)}</p>
+            `;
+        }
+
+        async function loadLeaderboard() {
+            const list = await apiCall('/leaderboard');
+            const container = document.getElementById('leaderboardList');
+            container.innerHTML = '';
+            if (!list.length) {
+                container.innerHTML = '<p>Пока нет игроков</p>';
+                return;
+            }
+            list.forEach((u, i) => {
+                const div = document.createElement('div');
+                div.className = 'leaderboard-entry';
+                div.innerHTML = `<span>${i+1}. ${u.name}</span><span>🌊 ${u.bestWave}</span>`;
+                div.addEventListener('click', async () => {
+                    await loadProfile(u.name, 'otherProfileStatsContainer');
+                    showScreen('otherProfile');
+                });
+                container.appendChild(div);
+            });
+        }
+
+        // ---------- ИГРА 9x9 (с исправленным перетаскиванием) ----------
+        const BOARD_SIZE = 9;
+        let board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+        let currentPieces = [];
+        let wavesCompleted = 0;
+        let gameActive = false;
+
+        const boardCanvas = document.getElementById('boardCanvas');
+        const boardCtx = boardCanvas.getContext('2d');
+        const waveSpan = document.getElementById('waveCounter');
+        const piecesDiv = document.getElementById('piecesContainer');
+        const gameMessage = document.getElementById('gameMessage');
+        const CELL_SIZE = 30;
+
+        let dragActive = false;
+        let draggedPieceIndex = -1;
+        let cloneNode = null;
+
+        const pieceLibrary = [
+            [[1]], [[1,1]], [[1],[1]], [[1,1],[1,1]], [[1,1,1]], [[1],[1],[1]],
+            [[1,1,1],[0,1,0]], [[1,0,0],[1,1,1]], [[0,0,1],[1,1,1]],
+            [[1,1,0],[0,1,1]], [[0,1,1],[1,1,0]], [[1,1,1,1]],
+            [[1],[1],[1],[1]], [[1,1,1],[1,0,0],[1,0,0]], [[1,1,1,1,1]],
+            [[1,1,1],[1,1,1],[1,1,1]]
+        ];
+
+        function getRandomPiece() {
+            const matrix = pieceLibrary[Math.floor(Math.random() * pieceLibrary.length)];
+            return { matrix: matrix.map(row => [...row]), width: matrix[0].length, height: matrix.length };
+        }
+
+        function generateNewWave() {
+            currentPieces = [];
+            for (let i = 0; i < 3; i++) currentPieces.push(getRandomPiece());
+            renderPieces();
+        }
+
+        function renderPieces() {
+            piecesDiv.innerHTML = '';
+            currentPieces.forEach((piece, idx) => {
+                const pieceEl = document.createElement('div');
+                pieceEl.className = 'piece';
+                pieceEl.dataset.pieceIndex = idx;
+                const canvas = document.createElement('canvas');
+                const cell = 24;
+                canvas.width = piece.width * cell;
+                canvas.height = piece.height * cell;
+                const pCtx = canvas.getContext('2d');
+                pCtx.clearRect(0, 0, canvas.width, canvas.height);
+                for (let r = 0; r < piece.height; r++) {
+                    for (let c = 0; c < piece.width; c++) {
+                        if (piece.matrix[r][c]) {
+                            pCtx.fillStyle = '#6db3d2'; // полупрозрачный цвет добавим в ctx?
+                            pCtx.shadowColor = '#aad0ff';
+                            pCtx.shadowBlur = 8;
+                            pCtx.fillRect(c*cell+1, r*cell+1, cell-2, cell-2);
+                            pCtx.shadowBlur = 0;
+                        }
+                    }
+                }
+                pieceEl.appendChild(canvas);
+                pieceEl.addEventListener('pointerdown', onDragStart);
+                piecesDiv.appendChild(pieceEl);
+            });
+        }
+
+        function onDragStart(e) {
+            if (!gameActive) return;
+            e.preventDefault();
+            const pieceEl = e.currentTarget;
+            const idx = parseInt(pieceEl.dataset.pieceIndex);
+            if (isNaN(idx)) return;
+            draggedPieceIndex = idx;
+            dragActive = true;
+
+            const piece = currentPieces[idx];
+            // Создаём клон canvas без масштабирования
+            cloneNode = document.createElement('canvas');
+            const cell = 24;
+            cloneNode.width = piece.width * cell;
+            cloneNode.height = piece.height * cell;
+            const ctx = cloneNode.getContext('2d');
+            for (let r = 0; r < piece.height; r++) {
+                for (let c = 0; c < piece.width; c++) {
+                    if (piece.matrix[r][c]) {
+                        ctx.fillStyle = '#6db3d2';
+                        ctx.shadowColor = '#aad0ff';
+                        ctx.shadowBlur = 8;
+                        ctx.fillRect(c*cell+1, r*cell+1, cell-2, cell-2);
+                        ctx.shadowBlur = 0;
+                    }
+                }
+            }
+            cloneNode.classList.add('drag-clone');
+            document.body.appendChild(cloneNode);
+            updateClonePosition(e.clientX, e.clientY);
+            pieceEl.classList.add('dragging');
+
+            function onPointerMove(e) {
+                if (!dragActive) return;
+                e.preventDefault();
+                updateClonePosition(e.clientX, e.clientY);
+            }
+            function onPointerUp(e) {
+                if (!dragActive) return;
+                e.preventDefault();
+                const piece = currentPieces[draggedPieceIndex];
+                const target = document.elementFromPoint(e.clientX, e.clientY);
+                if (target === boardCanvas || boardCanvas.contains(target)) {
+                    const rect = boardCanvas.getBoundingClientRect();
+                    const canvasX = (e.clientX - rect.left) * (boardCanvas.width / rect.width);
+                    const canvasY = (e.clientY - rect.top) * (boardCanvas.height / rect.height);
+                    // Центрирование по ближайшей клетке
+                    const col = Math.floor(canvasX / CELL_SIZE - piece.width/2 + 0.5);
+                    const row = Math.floor(canvasY / CELL_SIZE - piece.height/2 + 0.5);
+                    if (row >= 0 && row + piece.height <= BOARD_SIZE && col >= 0 && col + piece.width <= BOARD_SIZE) {
+                        tryPlacePiece(piece, row, col, draggedPieceIndex);
+                    }
+                }
+                cleanDrag();
+                window.removeEventListener('pointermove', onPointerMove);
+                window.removeEventListener('pointerup', onPointerUp);
+            }
+            window.addEventListener('pointermove', onPointerMove);
+            window.addEventListener('pointerup', onPointerUp);
+        }
+
+        function updateClonePosition(clientX, clientY) {
+            if (!cloneNode) return;
+            cloneNode.style.left = (clientX - cloneNode.width/2) + 'px';
+            cloneNode.style.top = (clientY - cloneNode.height/2) + 'px';
+        }
+
+        function cleanDrag() {
+            if (cloneNode) { cloneNode.remove(); cloneNode = null; }
+            if (draggedPieceIndex !== -1) {
+                const prev = document.querySelector(`.piece[data-piece-index="${draggedPieceIndex}"]`);
+                if (prev) prev.classList.remove('dragging');
+            }
+            dragActive = false;
+            draggedPieceIndex = -1;
+        }
+
+        function tryPlacePiece(piece, row, col, pieceIndex) {
+            if (!canPlacePiece(piece, row, col)) {
+                gameMessage.textContent = 'Сюда нельзя';
+                return false;
+            }
+            placePiece(piece, row, col);
+            playSound('place');
+            if (clearFullLines()) {
+                boardCanvas.classList.add('line-clear-effect');
+                setTimeout(() => boardCanvas.classList.remove('line-clear-effect'), 300);
+                playSound('clear');
+            }
+            currentPieces.splice(pieceIndex, 1);
+            drawBoard();
+            renderPieces();
+            gameMessage.textContent = '';
+            if (currentPieces.length === 0) {
+                wavesCompleted++;
+                waveSpan.textContent = wavesCompleted;
+                if (isBoardFull()) endGame(true);
+                else generateNewWave();
+                drawBoard();
+            }
+            return true;
+        }
+
+        function canPlacePiece(piece, r0, c0) {
+            for (let r = 0; r < piece.height; r++) {
+                for (let c = 0; c < piece.width; c++) {
+                    if (piece.matrix[r][c]) {
+                        const br = r0 + r, bc = c0 + c;
+                        if (br < 0 || br >= BOARD_SIZE || bc < 0 || bc >= BOARD_SIZE || board[br][bc]) return false;
+                    }
+                }
+            }
+            return true;
+        }
+
+        function placePiece(piece, r0, c0) {
+            for (let r = 0; r < piece.height; r++) {
+                for (let c = 0; c < piece.width; c++) {
+                    if (piece.matrix[r][c]) board[r0+r][c0+c] = 1;
+                }
+            }
+        }
+
+        function clearFullLines() {
+            let cleared = false;
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                if (board[r].every(v => v)) { board[r] = Array(BOARD_SIZE).fill(0); cleared = true; }
+            }
+            for (let c = 0; c < BOARD_SIZE; c++) {
+                let full = true;
+                for (let r = 0; r < BOARD_SIZE; r++) if (!board[r][c]) { full = false; break; }
+                if (full) { for (let r = 0; r < BOARD_SIZE; r++) board[r][c] = 0; cleared = true; }
+            }
+            return cleared;
+        }
+
+        function drawBoard() {
+            boardCtx.clearRect(0, 0, 270, 270);
+            // сетка
+            boardCtx.strokeStyle = 'rgba(255,255,255,0.15)';
+            boardCtx.lineWidth = 1;
+            for (let i = 0; i <= BOARD_SIZE; i++) {
+                boardCtx.beginPath();
+                boardCtx.moveTo(i*CELL_SIZE, 0); boardCtx.lineTo(i*CELL_SIZE, 270);
+                boardCtx.moveTo(0, i*CELL_SIZE); boardCtx.lineTo(270, i*CELL_SIZE);
+                boardCtx.stroke();
+            }
+            // кубики с полупрозрачностью
+            for (let r = 0; r < BOARD_SIZE; r++) {
+                for (let c = 0; c < BOARD_SIZE; c++) {
+                    if (board[r][c]) {
+                        boardCtx.fillStyle = 'rgba(109, 179, 210, 0.8)';
+                        boardCtx.shadowColor = '#aad0ff';
+                        boardCtx.shadowBlur = 8;
+                        boardCtx.fillRect(c*CELL_SIZE+2, r*CELL_SIZE+2, CELL_SIZE-4, CELL_SIZE-4);
+                        boardCtx.shadowBlur = 0;
+                    }
+                }
+            }
+        }
+
+        function isBoardFull() {
+            return board.every(row => row.every(cell => cell));
+        }
+
+        async function endGame(completed = false) {
+            if (!gameActive) return;
+            gameActive = false;
+            playSound('gameover');
+            if (!currentSession.isGuest) {
+                await apiCall('/update', 'POST', {
+                    username: currentSession.username,
+                    bestWave: wavesCompleted,
+                    gamesPlayed: 1
+                });
+            }
+            gameMessage.textContent = completed ? '🥳 Поле заполнено! Игра окончена.' : 'Игра завершена.';
+            cleanDrag();
+        }
+
+        function startNewGame() {
+            board = Array(BOARD_SIZE).fill().map(() => Array(BOARD_SIZE).fill(0));
+            wavesCompleted = 0;
+            waveSpan.textContent = '0';
+            gameActive = true;
+            generateNewWave();
+            drawBoard();
+            gameMessage.textContent = '';
+            cleanDrag();
+            initAudio();
+        }
+
+        window.addEventListener('dragstart', e => e.preventDefault());
+
+        // Проверка сессии при загрузке
+        if (currentSession) {
+            document.getElementById('welcomeUser').textContent = currentSession.isGuest ? '👤 Гость' : `👋 ${currentSession.username}`;
+            showScreen('menu');
+        } else {
+            showScreen('login');
+        }
+    })();
+</script>
+</body>
+</html>
